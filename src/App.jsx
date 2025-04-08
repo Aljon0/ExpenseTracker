@@ -38,7 +38,7 @@ const App = () => {
     };
 
     checkUserSession();
-  }, [isLoggedIn]);
+  }, []);
 
   const handleLogout = async () => {
     try {
