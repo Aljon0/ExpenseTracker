@@ -1,69 +1,168 @@
-import React, { createContext, useState, useContext } from "react";
+/* eslint-disable no-unused-vars*/
+import React, { createContext, useState, useContext, useEffect } from "react";
+import {
+  getExpenses,
+  createExpense,
+  updateExpense as updateAppwriteExpense,
+  deleteExpense as deleteAppwriteExpense,
+  getCurrentUser,
+} from "../services/appwrite";
+import { useToast } from "./ToastContext";
 
 const ExpenseContext = createContext();
 
 export const useExpenses = () => useContext(ExpenseContext);
 
 export const ExpenseProvider = ({ children }) => {
-  const [expenses, setExpenses] = useState([
-    {
-      id: 1,
-      title: "Grocery Shopping",
-      amount: 89.54,
-      category: "Food",
-      date: "2025-03-15",
-    },
-    {
-      id: 2,
-      title: "Netflix Subscription",
-      amount: 15.99,
-      category: "Entertainment",
-      date: "2025-03-10",
-    },
-    {
-      id: 3,
-      title: "Electricity Bill",
-      amount: 124.35,
-      category: "Utilities",
-      date: "2025-03-05",
-    },
-    {
-      id: 4,
-      title: "Train Tickets",
-      amount: 42.5,
-      category: "Travel",
-      date: "2025-03-12",
-    },
-    {
-      id: 5,
-      title: "Restaurant Dinner",
-      amount: 78.25,
-      category: "Food",
-      date: "2025-03-14",
-    },
-  ]);
+  const [expenses, setExpenses] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const { error } = useToast();
 
-  const addExpense = (expense) => {
-    const newExpense = {
-      ...expense,
-      id: expenses.length + 1,
-      amount: parseFloat(expense.amount),
+  useEffect(() => {
+    const initialize = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+          setUser(currentUser);
+          await fetchExpenses(currentUser.$id);
+        }
+      } catch (err) {
+        console.error("Initialization error:", err);
+      } finally {
+        setIsLoading(false);
+      }
     };
-    setExpenses([...expenses, newExpense]);
+
+    initialize();
+  }, []);
+
+  const fetchExpenses = async (userId) => {
+    try {
+      setIsLoading(true);
+      const response = await getExpenses(userId);
+      if (response && response.documents) {
+        setExpenses(response.documents);
+      }
+    } catch (err) {
+      console.error("Error fetching expenses:", err);
+      error("Failed to load expenses");
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const updateExpense = (updatedExpense) => {
-    setExpenses(
-      expenses.map((expense) =>
-        expense.id === updatedExpense.id
-          ? { ...updatedExpense, amount: parseFloat(updatedExpense.amount) }
-          : expense
-      )
-    );
+  // First useEffect to check authentication status
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        setIsAuthenticated(!!currentUser);
+        setIsLoading(false);
+      } catch (err) {
+        console.error("Error checking authentication status:", err);
+        setIsAuthenticated(false);
+        setIsLoading(false);
+      }
+    };
+
+    checkAuthStatus();
+  }, []);
+
+  // Second useEffect to fetch expenses only when authenticated
+  useEffect(() => {
+    const fetchExpenses = async () => {
+      // Only fetch if user is authenticated
+      if (!isAuthenticated) return;
+
+      try {
+        setIsLoading(true);
+        const currentUser = await getCurrentUser();
+        const response = await getExpenses(currentUser.$id);
+        if (response && response.documents) {
+          setExpenses(response.documents);
+        }
+      } catch (err) {
+        console.error("Error fetching expenses:", err);
+        error("Failed to load expenses");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchExpenses();
+  }, [isAuthenticated, error]);
+
+  // Rest of your code remains the same
+  const addExpense = async (expense) => {
+    try {
+      setIsLoading(true);
+      const currentUser = await getCurrentUser();
+
+      if (!currentUser) {
+        throw new Error("User not authenticated");
+      }
+
+      const newExpense = {
+        ...expense,
+        amount: parseFloat(expense.amount),
+        userId: currentUser.$id,
+      };
+
+      const response = await createExpense(newExpense);
+      setExpenses([...expenses, response]);
+      return response;
+    } catch (err) {
+      console.error("Error adding expense:", err);
+      error("Failed to add expense");
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const deleteExpense = (id) => {
-    setExpenses(expenses.filter((expense) => expense.id !== id));
+  const updateExpense = async (updatedExpense) => {
+    try {
+      setIsLoading(true);
+      const expenseToUpdate = {
+        ...updatedExpense,
+        amount: parseFloat(updatedExpense.amount),
+      };
+
+      const response = await updateAppwriteExpense(
+        updatedExpense.$id,
+        expenseToUpdate
+      );
+
+      setExpenses(
+        expenses.map((expense) =>
+          expense.$id === response.$id ? response : expense
+        )
+      );
+      return response;
+    } catch (err) {
+      console.error("Error updating expense:", err);
+      error("Failed to update expense");
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteExpense = async (id) => {
+    try {
+      setIsLoading(true);
+      await deleteAppwriteExpense(id);
+      setExpenses(expenses.filter((expense) => expense.$id !== id));
+    } catch (err) {
+      console.error("Error deleting expense:", err);
+      error("Failed to delete expense");
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Summary calculations
@@ -78,11 +177,14 @@ export const ExpenseProvider = ({ children }) => {
 
   const value = {
     expenses,
+    isLoading,
+    user,
     addExpense,
     updateExpense,
     deleteExpense,
     getTotalExpenses,
     getCategoryTotals,
+    fetchExpenses,
   };
 
   return (

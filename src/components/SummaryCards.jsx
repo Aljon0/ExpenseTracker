@@ -2,12 +2,34 @@ import React from "react";
 import { useExpenses } from "../contexts/ExpenseContext";
 
 const SummaryCards = () => {
-  const { getTotalExpenses, getCategoryTotals } = useExpenses();
-  const totalExpenses = getTotalExpenses();
-  const categoryTotals = getCategoryTotals();
+  const { getTotalExpenses, getCategoryTotals, isLoading, expenses } =
+    useExpenses();
 
   // Get current month
   const currentMonth = new Date().toLocaleString("default", { month: "long" });
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="bg-white rounded-lg shadow-md p-6 animate-pulse"
+          >
+            <div className="flex justify-between items-center">
+              <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+              <div className="h-6 w-6 bg-gray-200 rounded-full"></div>
+            </div>
+            <div className="h-8 bg-gray-200 rounded w-1/2 mt-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/4 mt-2"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const totalExpenses = getTotalExpenses();
+  const categoryTotals = getCategoryTotals();
 
   // Get top category
   const topCategory = Object.entries(categoryTotals).sort(
@@ -60,7 +82,9 @@ const SummaryCards = () => {
           </svg>
         </div>
         <p className="text-3xl font-bold mt-2">{topCategory[0]}</p>
-        <p className="text-sm opacity-80 mt-2">${topCategory[1].toFixed(2)}</p>
+        <p className="text-sm opacity-80 mt-2">
+          ${topCategory[1] ? topCategory[1].toFixed(2) : "0.00"}
+        </p>
       </div>
 
       <div
@@ -84,9 +108,7 @@ const SummaryCards = () => {
             />
           </svg>
         </div>
-        <p className="text-3xl font-bold mt-2">
-          {Object.keys(categoryTotals).length}
-        </p>
+        <p className="text-3xl font-bold mt-2">{expenses.length}</p>
         <p className="text-sm opacity-80 mt-2">Month of {currentMonth}</p>
       </div>
     </div>

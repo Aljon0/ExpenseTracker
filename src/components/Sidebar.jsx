@@ -1,8 +1,23 @@
 import React from "react";
 
-const Sidebar = ({ user, handleLogout }) => {
+const Sidebar = ({ user, setIsLoggedIn }) => {
+  // Extract user's display name or use email if name isn't available
+  const displayName = user?.name || user?.email || "User";
+
+  // Get first character for avatar
+  const avatarInitial = displayName.charAt(0).toUpperCase();
+
+  // Handle logout function
+  const handleLogout = () => {
+    // Call the setIsLoggedIn function from props to update login state
+    setIsLoggedIn(false);
+    // You might want to clear any stored tokens or user data here as well
+    localStorage.removeItem("authToken"); // If you're using local storage for auth
+    localStorage.removeItem("userData"); // If you're storing user data
+  };
+
   return (
-    <div className="w-64 bg-gray-800 text-white">
+    <div className="w-64 bg-gray-800 text-white h-full min-h-screen">
       <div className="p-4 border-b border-gray-700">
         <h1 className="text-2xl font-bold">
           <span className="text-green-400">Expense</span>Tracker
@@ -73,13 +88,13 @@ const Sidebar = ({ user, handleLogout }) => {
       <div className="absolute bottom-0 p-4 w-64 border-t border-gray-700">
         <div className="flex items-center">
           <div className="h-8 w-8 rounded-full bg-green-400 flex items-center justify-center text-white font-bold">
-            {user.name[0]}
+            {avatarInitial}
           </div>
           <div className="ml-3">
-            <p className="text-sm font-medium">{user.name}</p>
+            <p className="text-sm font-medium">{displayName}</p>
             <button
               onClick={handleLogout}
-              className="text-xs text-gray-400 hover:text-white"
+              className="text-xs text-gray-400 hover:text-white cursor-pointer"
             >
               Sign Out
             </button>
