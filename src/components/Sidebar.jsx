@@ -1,6 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 
-const Sidebar = ({ user, setIsLoggedIn }) => {
+const Sidebar = ({ user, onLogout }) => {
+  // State for logout confirmation modal
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
   // Extract user's display name or use email if name isn't available
   const displayName = user?.name || user?.email || "User";
 
@@ -8,16 +11,20 @@ const Sidebar = ({ user, setIsLoggedIn }) => {
   const avatarInitial = displayName.charAt(0).toUpperCase();
 
   // Handle logout function
-  const handleLogout = () => {
-    // Call the setIsLoggedIn function from props to update login state
-    setIsLoggedIn(false);
-    // You might want to clear any stored tokens or user data here as well
-    localStorage.removeItem("authToken"); // If you're using local storage for auth
-    localStorage.removeItem("userData"); // If you're storing user data
+  const handleLogout = async () => {
+    try {
+      if (typeof onLogout === "function") {
+        await onLogout();
+      } else {
+        console.error("onLogout is not a function");
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   return (
-    <div className="w-64 bg-gray-800 text-white h-full min-h-screen">
+    <div className="w-64 bg-gray-800 text-white h-full min-h-screen relative">
       <div className="p-4 border-b border-gray-700">
         <h1 className="text-2xl font-bold">
           <span className="text-green-400">Expense</span>Tracker
@@ -37,7 +44,7 @@ const Sidebar = ({ user, setIsLoggedIn }) => {
             </svg>
             Dashboard
           </li>
-          <li className="flex items-center p-2 rounded hover:bg-gray-700">
+          <li className="flex items-center p-2 rounded hover:bg-gray-700 transition duration-150">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-5 w-5 mr-3"
@@ -52,7 +59,7 @@ const Sidebar = ({ user, setIsLoggedIn }) => {
             </svg>
             Transactions
           </li>
-          <li className="flex items-center p-2 rounded hover:bg-gray-700">
+          <li className="flex items-center p-2 rounded hover:bg-gray-700 transition duration-150">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-5 w-5 mr-3"
@@ -67,7 +74,7 @@ const Sidebar = ({ user, setIsLoggedIn }) => {
             </svg>
             Reports
           </li>
-          <li className="flex items-center p-2 rounded hover:bg-gray-700">
+          <li className="flex items-center p-2 rounded hover:bg-gray-700 transition duration-150">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-5 w-5 mr-3"
@@ -86,21 +93,85 @@ const Sidebar = ({ user, setIsLoggedIn }) => {
       </nav>
 
       <div className="absolute bottom-0 p-4 w-64 border-t border-gray-700">
-        <div className="flex items-center">
-          <div className="h-8 w-8 rounded-full bg-green-400 flex items-center justify-center text-white font-bold">
-            {avatarInitial}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="h-10 w-10 rounded-full bg-green-400 flex items-center justify-center text-white font-bold">
+              {avatarInitial}
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium">{displayName}</p>
+            </div>
           </div>
-          <div className="ml-3">
-            <p className="text-sm font-medium">{displayName}</p>
-            <button
-              onClick={handleLogout}
-              className="text-xs text-gray-400 hover:text-white cursor-pointer"
+          <button
+            onClick={() => setShowLogoutConfirm(true)}
+            className="p-2 rounded-full hover:bg-gray-700 transition duration-150"
+            title="Sign Out"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
             >
-              Sign Out
-            </button>
-          </div>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              />
+            </svg>
+          </button>
         </div>
       </div>
+
+      {/* Logout confirmation modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 backdrop-blur-xs bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 m-4 max-w-sm w-full text-gray-800">
+            <div className="flex items-center mb-4">
+              <div className="bg-red-100 p-2 rounded-full mr-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6 text-red-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium">Sign Out</h3>
+            </div>
+            <p className="mb-6">
+              Are you sure you want to sign out? Any unsaved changes will be
+              lost.
+            </p>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md transition duration-150"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setShowLogoutConfirm(false);
+                }}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition duration-150"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

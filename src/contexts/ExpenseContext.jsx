@@ -20,82 +20,41 @@ export const ExpenseProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const { error } = useToast();
 
+  // Single useEffect to handle both auth and data loading
   useEffect(() => {
-    const initialize = async () => {
-      try {
-        const currentUser = await getCurrentUser();
-        if (currentUser) {
-          setUser(currentUser);
-          await fetchExpenses(currentUser.$id);
-        }
-      } catch (err) {
-        console.error("Initialization error:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initialize();
-  }, []);
-
-  const fetchExpenses = async (userId) => {
-    try {
-      setIsLoading(true);
-      const response = await getExpenses(userId);
-      if (response && response.documents) {
-        setExpenses(response.documents);
-      }
-    } catch (err) {
-      console.error("Error fetching expenses:", err);
-      error("Failed to load expenses");
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // First useEffect to check authentication status
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        const currentUser = await getCurrentUser();
-        setIsAuthenticated(!!currentUser);
-        setIsLoading(false);
-      } catch (err) {
-        console.error("Error checking authentication status:", err);
-        setIsAuthenticated(false);
-        setIsLoading(false);
-      }
-    };
-
-    checkAuthStatus();
-  }, []);
-
-  // Second useEffect to fetch expenses only when authenticated
-  useEffect(() => {
-    const fetchExpenses = async () => {
-      // Only fetch if user is authenticated
-      if (!isAuthenticated) return;
-
+    const initializeApp = async () => {
       try {
         setIsLoading(true);
         const currentUser = await getCurrentUser();
-        const response = await getExpenses(currentUser.$id);
-        if (response && response.documents) {
-          setExpenses(response.documents);
+
+        if (currentUser) {
+          setUser(currentUser);
+          setIsAuthenticated(true);
+
+          // Fetch expenses only if we have a user
+          const response = await getExpenses(currentUser.$id);
+          if (response && response.documents) {
+            setExpenses(response.documents);
+          }
+        } else {
+          setIsAuthenticated(false);
+          setUser(null);
+          setExpenses([]);
         }
       } catch (err) {
-        console.error("Error fetching expenses:", err);
-        error("Failed to load expenses");
+        console.error("Initialization error:", err);
+        error("Failed to load data");
+        setIsAuthenticated(false);
+        setUser(null);
+        setExpenses([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchExpenses();
-  }, [isAuthenticated, error]);
+    initializeApp();
+  }, [error]);
 
-  // Rest of your code remains the same
   const addExpense = async (expense) => {
     try {
       setIsLoading(true);
@@ -179,12 +138,12 @@ export const ExpenseProvider = ({ children }) => {
     expenses,
     isLoading,
     user,
+    isAuthenticated,
     addExpense,
     updateExpense,
     deleteExpense,
     getTotalExpenses,
     getCategoryTotals,
-    fetchExpenses,
   };
 
   return (

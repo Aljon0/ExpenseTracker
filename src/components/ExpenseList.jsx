@@ -1,16 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useExpenses } from "../contexts/ExpenseContext";
 
-const ExpenseList = ({ onEditExpense, openAddForm }) => {
+const ExpenseList = ({ onEditExpense, openAddForm, searchTerm }) => {
   const { expenses, deleteExpense } = useExpenses();
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5; // You can adjust this value based on your preference
+  const itemsPerPage = 5;
 
-  // Calculate pagination
+  // Filter expenses based on search term (title or category)
+  const filteredExpenses = useMemo(() => {
+    if (!searchTerm) return expenses;
+
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+    return expenses.filter(
+      (expense) =>
+        expense.title.toLowerCase().includes(lowerCaseSearchTerm) ||
+        expense.category.toLowerCase().includes(lowerCaseSearchTerm)
+    );
+  }, [expenses, searchTerm]);
+
+  // Calculate pagination based on filtered expenses
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentExpenses = expenses.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(expenses.length / itemsPerPage);
+  const currentExpenses = filteredExpenses.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+  const totalPages = Math.ceil(filteredExpenses.length / itemsPerPage);
+
+  // Reset to first page when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);

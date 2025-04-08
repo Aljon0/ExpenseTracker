@@ -1,5 +1,5 @@
 import { Client, Account, Databases, ID, Query } from "appwrite";
-
+/* eslint-disable no-unused-vars */
 const appwriteConfig = {
   endpoint: "https://cloud.appwrite.io/v1",
   projectId: "67f4746900356096afe5", // Replace with your Appwrite project ID
@@ -19,30 +19,32 @@ const databases = new Databases(client);
 // Auth functions
 const createAccount = async (email, password, name) => {
   try {
+    // Create account first
     await account.create(ID.unique(), email, password, name);
 
-    // Create session (login)
-    await login(email, password);
+    // Return success without trying to login immediately
+    return { success: true };
   } catch (error) {
     if (error.code === 409) {
       throw new Error("Email already exists. Please try logging in.");
     } else {
-      throw new Error("An error occurred while creating the account.");
+      throw error; // Let the error propagate with its original message
     }
   }
 };
 
 const login = async (email, password) => {
   try {
-    return await account.createEmailPasswordSession(email, password);
-  } catch (error) {
-    if (error.code === 401) {
-      throw new Error("Invalid email or password. Please try again.");
-    } else if (error.code === 429) {
-      throw new Error("Too many login attempts. Please try again later.");
-    } else {
-      throw error;
+    await account.createEmailPasswordSession(email, password);
+    const user = await getCurrentUser();
+    // Store session token in localStorage
+    if (user) {
+      localStorage.setItem("sessionActive", "true");
     }
+    return user;
+  } catch (error) {
+    localStorage.removeItem("sessionActive");
+    throw error;
   }
 };
 
@@ -55,20 +57,20 @@ const getCurrentUser = async () => {
       return null;
     }
     console.error("Error getting current user:", error);
-    throw error;
   }
 };
 const logout = async () => {
   try {
-    return await account.deleteSession("current");
+    // Delete all sessions (not just current)
+    await account.deleteSessions();
+    // Clear any local storage
+    localStorage.clear();
+    return true;
   } catch (error) {
-    if (error.code === 401) {
-      console.error("User is not logged in.");
-      return;
-    } else if (error.code === 429) {
-      throw new Error("Too many logout attempts. Please try again later.");
-    }
     console.error("Error logging out:", error);
+    // Even if there's an error, clear local storage
+    localStorage.clear();
+    return false;
   }
 };
 
@@ -147,6 +149,29 @@ const deleteExpense = async (documentId) => {
       throw error;
     }
   }
+};
+
+client
+  .setEndpoint(appwriteConfig.endpoint)
+  .setProject(appwriteConfig.projectId);
+
+// Add this to handle authentication
+const handleRequest = async () => {
+  if (!localStorage.getItem("sessionActive")) {
+    try {
+      const user = await getCurrentUser();
+      if (user) {
+        localStorage.setItem("sessionActive", "true");
+      }
+    } catch (error) {
+      console.error("Auth check failed:", error);
+    }
+  }
+};
+
+// Call this before making database requests
+const prepareRequest = async () => {
+  await handleRequest();
 };
 
 export {
