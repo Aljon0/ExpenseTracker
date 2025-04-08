@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import Sidebar from "./Sidebar";
 import SummaryCards from "./SummaryCards";
 import ExpenseList from "./ExpenseList";
 import ExpenseForm from "./ExpenseForm";
-import { useState } from "react";
+import { useToast } from "../contexts/ToastContext";
 
 const Dashboard = ({ user, setIsLoggedIn }) => {
   const [isAdding, setIsAdding] = useState(false);
@@ -15,10 +15,16 @@ const Dashboard = ({ user, setIsLoggedIn }) => {
     category: "Food",
     date: "",
   });
+  const { success } = useToast();
+
+  const handleLogout = () => {
+    success("Logged out successfully");
+    setIsLoggedIn(false);
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      <Sidebar user={user} setIsLoggedIn={setIsLoggedIn} />
+      <Sidebar user={user} handleLogout={handleLogout} />
 
       <div className="flex-1 p-8">
         <div className="flex justify-between items-center mb-8">

@@ -1,6 +1,6 @@
 import React from "react";
 
-const Sidebar = ({ user, setIsLoggedIn }) => {
+const Sidebar = ({ user, handleLogout }) => {
   return (
     <div className="w-64 bg-gray-800 text-white">
       <div className="p-4 border-b border-gray-700">
@@ -78,7 +78,7 @@ const Sidebar = ({ user, setIsLoggedIn }) => {
           <div className="ml-3">
             <p className="text-sm font-medium">{user.name}</p>
             <button
-              onClick={() => setIsLoggedIn(false)}
+              onClick={handleLogout}
               className="text-xs text-gray-400 hover:text-white"
             >
               Sign Out

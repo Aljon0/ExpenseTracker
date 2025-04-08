@@ -1,5 +1,6 @@
 import React from "react";
 import { useExpenses } from "../contexts/ExpenseContext";
+import { useToast } from "../contexts/ToastContext";
 
 const ExpenseForm = ({
   currentExpense,
@@ -9,6 +10,7 @@ const ExpenseForm = ({
   setIsEditing,
 }) => {
   const { addExpense, updateExpense } = useExpenses();
+  const { success } = useToast();
 
   // Available categories
   const categories = [
@@ -27,8 +29,10 @@ const ExpenseForm = ({
     if (isEditing) {
       updateExpense(currentExpense);
       setIsEditing(false);
+      success(`Expense "${currentExpense.title}" updated successfully`);
     } else {
       addExpense(currentExpense);
+      success(`New expense "${currentExpense.title}" added successfully`);
     }
     setCurrentExpense({
       id: null,
