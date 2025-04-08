@@ -4,7 +4,23 @@ import { useExpenses } from "../contexts/ExpenseContext";
 const ExpenseList = ({ onEditExpense, openAddForm, searchTerm }) => {
   const { expenses, deleteExpense } = useExpenses();
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+
+  // Adjust items per page based on screen size
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640) {
+        setItemsPerPage(3);
+      } else {
+        setItemsPerPage(5);
+      }
+    };
+
+    handleResize(); // Initial setting
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Filter expenses based on search term (title or category)
   const filteredExpenses = useMemo(() => {
@@ -49,17 +65,23 @@ const ExpenseList = ({ onEditExpense, openAddForm, searchTerm }) => {
     }
   };
 
+  // Handle delete with confirmation
+  const handleDelete = (id) => {
+    deleteExpense(id);
+    setShowDeleteConfirm(null);
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="flex justify-between items-center p-6 border-b">
-        <h3 className="text-lg font-medium">Recent Expenses</h3>
+      <div className="flex justify-between items-center p-4 md:p-6 border-b">
+        <h3 className="text-base md:text-lg font-medium">Recent Expenses</h3>
         <button
           onClick={openAddForm}
-          className="px-4 py-2 bg-gradient-to-r from-green-400 to-green-500 text-white rounded-md flex items-center"
+          className="px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-green-400 to-green-500 text-white rounded-md flex items-center text-sm md:text-base"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 mr-1"
+            className="h-4 w-4 md:h-5 md:w-5 mr-1"
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -69,11 +91,13 @@ const ExpenseList = ({ onEditExpense, openAddForm, searchTerm }) => {
               clipRule="evenodd"
             />
           </svg>
-          Add Expense
+          <span className="hidden sm:inline">Add Expense</span>
+          <span className="sm:hidden">Add</span>
         </button>
       </div>
 
-      <div className="overflow-x-auto">
+      {/* Desktop table view */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -139,7 +163,7 @@ const ExpenseList = ({ onEditExpense, openAddForm, searchTerm }) => {
                     Edit
                   </button>
                   <button
-                    onClick={() => deleteExpense(expense.id)}
+                    onClick={() => setShowDeleteConfirm(expense.id)}
                     className="text-red-600 hover:text-red-900"
                   >
                     Delete
@@ -151,17 +175,103 @@ const ExpenseList = ({ onEditExpense, openAddForm, searchTerm }) => {
         </table>
       </div>
 
+      {/* Mobile card view */}
+      <div className="md:hidden">
+        {currentExpenses.map((expense) => (
+          <div key={expense.id} className="p-4 border-b hover:bg-gray-50">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <div className="text-sm font-medium text-gray-900 mb-1">
+                  {expense.title}
+                </div>
+                <div className="flex items-center space-x-2 mb-2">
+                  <span
+                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      expense.category === "Food"
+                        ? "bg-green-100 text-green-800"
+                        : expense.category === "Entertainment"
+                        ? "bg-purple-100 text-purple-800"
+                        : expense.category === "Utilities"
+                        ? "bg-blue-100 text-blue-800"
+                        : expense.category === "Travel"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : expense.category === "Shopping"
+                        ? "bg-pink-100 text-pink-800"
+                        : expense.category === "Housing"
+                        ? "bg-indigo-100 text-indigo-800"
+                        : expense.category === "Healthcare"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {expense.category}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {new Date(expense.date).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-medium text-gray-900">
+                  ${expense.amount.toFixed(2)}
+                </div>
+                <div className="mt-2 flex space-x-2">
+                  <button
+                    onClick={() => onEditExpense(expense)}
+                    className="text-blue-600 hover:text-blue-900 text-xs"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteConfirm(expense.id)}
+                    className="text-red-600 hover:text-red-900 text-xs"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Delete confirmation modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <h3 className="text-lg font-medium mb-4">Confirm Deletion</h3>
+            <p className="mb-6">
+              Are you sure you want to delete this expense?
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowDeleteConfirm(null)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(showDeleteConfirm)}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {expenses.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           No expenses found. Add your first expense to get started!
         </div>
       ) : (
-        <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200">
+        <div className="px-4 md:px-6 py-3 flex items-center justify-between border-t border-gray-200">
           <div className="flex-1 flex justify-between sm:hidden">
             <button
               onClick={prevPage}
               disabled={currentPage === 1}
-              className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+              className={`relative inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md ${
                 currentPage === 1
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                   : "bg-white text-gray-700 hover:bg-gray-50"
@@ -169,10 +279,13 @@ const ExpenseList = ({ onEditExpense, openAddForm, searchTerm }) => {
             >
               Previous
             </button>
+            <div className="text-xs text-gray-500 mx-2 flex items-center">
+              Page {currentPage} of {totalPages}
+            </div>
             <button
               onClick={nextPage}
               disabled={currentPage === totalPages}
-              className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+              className={`relative inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md ${
                 currentPage === totalPages
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                   : "bg-white text-gray-700 hover:bg-gray-50"
@@ -183,7 +296,7 @@ const ExpenseList = ({ onEditExpense, openAddForm, searchTerm }) => {
           </div>
           <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm text-gray-700">
+              <p className="text-xs md:text-sm text-gray-700">
                 Showing{" "}
                 <span className="font-medium">{indexOfFirstItem + 1}</span> to{" "}
                 <span className="font-medium">
@@ -201,7 +314,7 @@ const ExpenseList = ({ onEditExpense, openAddForm, searchTerm }) => {
                 <button
                   onClick={prevPage}
                   disabled={currentPage === 1}
-                  className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
+                  className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-xs md:text-sm font-medium ${
                     currentPage === 1
                       ? "text-gray-300 cursor-not-allowed"
                       : "text-gray-500 hover:bg-gray-50"
@@ -209,7 +322,7 @@ const ExpenseList = ({ onEditExpense, openAddForm, searchTerm }) => {
                 >
                   <span className="sr-only">Previous</span>
                   <svg
-                    className="h-5 w-5"
+                    className="h-4 w-4 md:h-5 md:w-5"
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 20 20"
                     fill="currentColor"
@@ -223,27 +336,38 @@ const ExpenseList = ({ onEditExpense, openAddForm, searchTerm }) => {
                   </svg>
                 </button>
 
-                {/* Page numbers */}
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (pageNumber) => (
+                {/* Page numbers - show fewer on mobile */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((pageNumber) => {
+                    if (totalPages <= 5) return true;
+                    if (window.innerWidth < 640) {
+                      return (
+                        pageNumber === 1 ||
+                        pageNumber === totalPages ||
+                        (pageNumber >= currentPage - 1 &&
+                          pageNumber <= currentPage + 1)
+                      );
+                    }
+                    return true;
+                  })
+                  .map((pageNumber) => (
                     <button
                       key={pageNumber}
                       onClick={() => paginate(pageNumber)}
-                      className={`relative inline-flex items-center px-4 py-2 border ${
+                      className={`relative inline-flex items-center px-3 py-1.5 md:px-4 md:py-2 border text-xs md:text-sm ${
                         pageNumber === currentPage
                           ? "bg-green-50 border-green-500 text-green-600 z-10"
                           : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                      } text-sm font-medium`}
+                      } font-medium`}
                     >
                       {pageNumber}
                     </button>
-                  )
-                )}
+                  ))}
 
                 <button
                   onClick={nextPage}
                   disabled={currentPage === totalPages}
-                  className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
+                  className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-xs md:text-sm font-medium ${
                     currentPage === totalPages
                       ? "text-gray-300 cursor-not-allowed"
                       : "text-gray-500 hover:bg-gray-50"
@@ -251,7 +375,7 @@ const ExpenseList = ({ onEditExpense, openAddForm, searchTerm }) => {
                 >
                   <span className="sr-only">Next</span>
                   <svg
-                    className="h-5 w-5"
+                    className="h-4 w-4 md:h-5 md:w-5"
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 20 20"
                     fill="currentColor"

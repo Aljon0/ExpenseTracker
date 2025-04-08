@@ -10,11 +10,11 @@ const SummaryCards = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="bg-white rounded-lg shadow-md p-6 animate-pulse"
+            className="bg-white rounded-lg shadow-md p-4 md:p-6 animate-pulse"
           >
             <div className="flex justify-between items-center">
               <div className="h-4 bg-gray-200 rounded w-1/3"></div>
@@ -37,13 +37,13 @@ const SummaryCards = () => {
   )[0] || ["None", 0];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <div className="bg-gradient-to-r from-green-400 to-green-500 rounded-lg shadow-md p-6 text-white">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+      <div className="bg-gradient-to-r from-green-400 to-green-500 rounded-lg shadow-md p-4 md:p-6 text-white">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-medium">Total Expenses</h3>
+          <h3 className="text-base md:text-lg font-medium">Total Expenses</h3>
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
+            className="h-5 w-5 md:h-6 md:w-6"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -56,19 +56,21 @@ const SummaryCards = () => {
             />
           </svg>
         </div>
-        <p className="text-3xl font-bold mt-2">${totalExpenses}</p>
-        <p className="text-sm opacity-80 mt-2">Month of {currentMonth}</p>
+        <p className="text-2xl md:text-3xl font-bold mt-2">${totalExpenses}</p>
+        <p className="text-xs md:text-sm opacity-80 mt-1 md:mt-2">
+          Month of {currentMonth}
+        </p>
       </div>
 
       <div
         style={{ backgroundColor: "#8AA2A9" }}
-        className="rounded-lg shadow-md p-6 text-white"
+        className="rounded-lg shadow-md p-4 md:p-6 text-white"
       >
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-medium">Top Category</h3>
+          <h3 className="text-base md:text-lg font-medium">Top Category</h3>
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
+            className="h-5 w-5 md:h-6 md:w-6"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -81,21 +83,21 @@ const SummaryCards = () => {
             />
           </svg>
         </div>
-        <p className="text-3xl font-bold mt-2">{topCategory[0]}</p>
-        <p className="text-sm opacity-80 mt-2">
+        <p className="text-2xl md:text-3xl font-bold mt-2">{topCategory[0]}</p>
+        <p className="text-xs md:text-sm opacity-80 mt-1 md:mt-2">
           ${topCategory[1] ? topCategory[1].toFixed(2) : "0.00"}
         </p>
       </div>
 
       <div
         style={{ backgroundColor: "#717C89" }}
-        className="rounded-lg shadow-md p-6 text-white"
+        className="rounded-lg shadow-md p-4 md:p-6 text-white sm:col-span-2 lg:col-span-1"
       >
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-medium">Recent Expenses</h3>
+          <h3 className="text-base md:text-lg font-medium">Recent Expenses</h3>
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
+            className="h-5 w-5 md:h-6 md:w-6"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -108,8 +110,10 @@ const SummaryCards = () => {
             />
           </svg>
         </div>
-        <p className="text-3xl font-bold mt-2">{expenses.length}</p>
-        <p className="text-sm opacity-80 mt-2">Month of {currentMonth}</p>
+        <p className="text-2xl md:text-3xl font-bold mt-2">{expenses.length}</p>
+        <p className="text-xs md:text-sm opacity-80 mt-1 md:mt-2">
+          Month of {currentMonth}
+        </p>
       </div>
     </div>
   );
