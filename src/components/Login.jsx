@@ -1,8 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "../contexts/ToastContext";
 import { login } from "../services/appwrite";
 
-const Login = ({ setIsLoggedIn, setShowLogin, setUser }) => {
+const Login = ({ setUser }) => {
   const [credentials, setCredentials] = useState({
     email: "",
     password: "",
@@ -10,6 +11,7 @@ const Login = ({ setIsLoggedIn, setShowLogin, setUser }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { success, error } = useToast();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -37,10 +39,15 @@ const Login = ({ setIsLoggedIn, setShowLogin, setUser }) => {
       const user = await login(credentials.email, credentials.password);
 
       if (user) {
+        localStorage.setItem("session", "true");
+        localStorage.setItem("id", JSON.stringify(user.$id));
+        localStorage.setItem("name", JSON.stringify(user.name));
         success("Login successful!");
-        setIsLoggedIn(true);
         setUser(user);
         setCredentials({ email: "", password: "" }); // Clear the form
+
+        // Use React Router to navigate to dashboard
+        navigate("/dashboard");
       }
     } catch (err) {
       error(err.message || "Login failed. Please check your credentials.");
@@ -160,7 +167,7 @@ const Login = ({ setIsLoggedIn, setShowLogin, setUser }) => {
         <div className="text-center text-sm text-gray-500">
           Don't have an account?{" "}
           <button
-            onClick={() => setShowLogin(false)}
+            onClick={() => navigate("/register")}
             className="text-green-500 hover:text-green-600 cursor-pointer"
             type="button"
             disabled={isLoading}

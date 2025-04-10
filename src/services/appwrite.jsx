@@ -1,5 +1,6 @@
-import { Client, Account, Databases, ID, Query } from "appwrite";
 /* eslint-disable no-unused-vars */
+import { Client, Account, Databases, ID, Query } from "appwrite";
+
 const appwriteConfig = {
   endpoint: import.meta.env.VITE_APPWRITE_ENDPOINT,
   projectId: import.meta.env.VITE_APPWRITE_PROJECT_ID,
@@ -37,10 +38,6 @@ const login = async (email, password) => {
   try {
     await account.createEmailPasswordSession(email, password);
     const user = await getCurrentUser();
-    // Store session token in localStorage
-    if (user) {
-      localStorage.setItem("sessionActive", "true");
-    }
     return user;
   } catch (error) {
     localStorage.removeItem("sessionActive");
@@ -50,33 +47,41 @@ const login = async (email, password) => {
 
 const getCurrentUser = async () => {
   try {
-    return await account.get();
+    const user = await account.get();
+    if (user) {
+      localStorage.setItem("sessionActive", "true");
+    }
+    return user;
   } catch (error) {
+    localStorage.removeItem("sessionActive");
     if (error.code === 401) {
       // Session is invalid/expired
       return null;
     }
     console.error("Error getting current user:", error);
+    throw error;
   }
 };
+
 const logout = async () => {
   try {
     // Delete all sessions (not just current)
     await account.deleteSessions();
     // Clear any local storage
-    localStorage.clear();
+    localStorage.removeItem("sessionActive");
     return true;
   } catch (error) {
     console.error("Error logging out:", error);
     // Even if there's an error, clear local storage
-    localStorage.clear();
-    return false;
+    localStorage.removeItem("sessionActive");
+    throw error;
   }
 };
 
 // Expense functions
 const createExpense = async (data) => {
   try {
+    await prepareRequest();
     return await databases.createDocument(
       appwriteConfig.databaseId,
       appwriteConfig.expensesCollectionId,
@@ -96,6 +101,7 @@ const createExpense = async (data) => {
 
 const getExpenses = async (userId) => {
   try {
+    await prepareRequest();
     if (!userId) {
       throw new Error("User ID is required");
     }
@@ -106,8 +112,6 @@ const getExpenses = async (userId) => {
     );
   } catch (error) {
     if (error.code === 401) {
-      // Clear any invalid session
-      await account.deleteSession("current");
       throw new Error("Session expired. Please log in again.");
     }
     throw error;
@@ -116,6 +120,7 @@ const getExpenses = async (userId) => {
 
 const updateExpense = async (documentId, data) => {
   try {
+    await prepareRequest();
     return await databases.updateDocument(
       appwriteConfig.databaseId,
       appwriteConfig.expensesCollectionId,
@@ -135,6 +140,7 @@ const updateExpense = async (documentId, data) => {
 
 const deleteExpense = async (documentId) => {
   try {
+    await prepareRequest();
     return await databases.deleteDocument(
       appwriteConfig.databaseId,
       appwriteConfig.expensesCollectionId,
@@ -151,27 +157,18 @@ const deleteExpense = async (documentId) => {
   }
 };
 
-client
-  .setEndpoint(appwriteConfig.endpoint)
-  .setProject(appwriteConfig.projectId);
-
-// Add this to handle authentication
-const handleRequest = async () => {
+// Add this to handle authentication before making database requests
+const prepareRequest = async () => {
   if (!localStorage.getItem("sessionActive")) {
     try {
       const user = await getCurrentUser();
-      if (user) {
-        localStorage.setItem("sessionActive", "true");
+      if (!user) {
+        throw new Error("No active session");
       }
     } catch (error) {
-      console.error("Auth check failed:", error);
+      throw new Error("Authentication required");
     }
   }
-};
-
-// Call this before making database requests
-const prepareRequest = async () => {
-  await handleRequest();
 };
 
 export {

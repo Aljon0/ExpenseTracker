@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "../contexts/ToastContext";
-import { createAccount } from "../services/appwrite";
+import { createAccount, login } from "../services/appwrite";
+/* eslint-disable no-unused-vars */
 
-const Register = ({ setShowLogin }) => {
+const Register = ({ setUser }) => {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -13,6 +15,7 @@ const Register = ({ setShowLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { success, error } = useToast();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -55,7 +58,22 @@ const Register = ({ setShowLogin }) => {
       await createAccount(formData.email, formData.password, formData.fullName);
 
       success("Registration successful! You can now log in.");
-      setShowLogin(true);
+
+      // Attempt to login automatically
+      try {
+        const user = await login(formData.email, formData.password);
+        if (user) {
+          localStorage.setItem("session", "true");
+          localStorage.setItem("id", JSON.stringify(user.$id));
+          localStorage.setItem("name", JSON.stringify(user.name));
+          setUser(user);
+          navigate("/dashboard");
+        }
+      } catch (loginErr) {
+        // If auto-login fails, redirect to login page
+        navigate("/");
+      }
+
       setFormData({
         // Clear the form
         fullName: "",
@@ -226,7 +244,7 @@ const Register = ({ setShowLogin }) => {
         <div className="text-center text-sm text-gray-500">
           Already have an account?{" "}
           <button
-            onClick={() => setShowLogin(true)}
+            onClick={() => navigate("/")}
             className="text-green-500 hover:text-green-600 cursor-pointer"
             type="button"
             disabled={isLoading}

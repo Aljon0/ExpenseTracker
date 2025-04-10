@@ -120,7 +120,7 @@ const ExpenseList = ({ onEditExpense, openAddForm, searchTerm }) => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {currentExpenses.map((expense) => (
-              <tr key={expense.id} className="hover:bg-gray-50">
+              <tr key={expense.$id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
                     {expense.title}
@@ -178,7 +178,7 @@ const ExpenseList = ({ onEditExpense, openAddForm, searchTerm }) => {
       {/* Mobile card view */}
       <div className="md:hidden">
         {currentExpenses.map((expense) => (
-          <div key={expense.id} className="p-4 border-b hover:bg-gray-50">
+          <div key={expense.$id} className="p-4 border-b hover:bg-gray-50">
             <div className="flex justify-between items-start">
               <div className="flex-1">
                 <div className="text-sm font-medium text-gray-900 mb-1">
