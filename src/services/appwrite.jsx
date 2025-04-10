@@ -1,10 +1,10 @@
 import { Client, Account, Databases, ID, Query } from "appwrite";
 /* eslint-disable no-unused-vars */
 const appwriteConfig = {
-  endpoint: "https://cloud.appwrite.io/v1",
-  projectId: "67f4746900356096afe5", // Replace with your Appwrite project ID
-  databaseId: "67f4758d0000ea978040", // Replace with your database ID
-  expensesCollectionId: "67f4759e0016db9e1a51", // Replace with your collection ID
+  endpoint: import.meta.env.VITE_APPWRITE_ENDPOINT,
+  projectId: import.meta.env.VITE_APPWRITE_PROJECT_ID,
+  databaseId: import.meta.env.VITE_APPWRITE_DATABASE_ID,
+  expensesCollectionId: import.meta.env.VITE_APPWRITE_EXPENSES_COLLECTION_ID,
 };
 
 // Initialize the Appwrite client
