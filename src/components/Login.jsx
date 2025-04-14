@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { useToast } from "../contexts/ToastContext";
 import { login } from "../services/appwrite";
 
-const Login = ({ setUser }) => {
+const Login = ({ setUser, setIsAuthenticated }) => {
   const [credentials, setCredentials] = useState({
     email: "",
     password: "",
@@ -38,17 +38,14 @@ const Login = ({ setUser }) => {
       // This returns the user directly
       const user = await login(credentials.email, credentials.password);
 
-      if (user) {
-        localStorage.setItem("session", "true");
-        localStorage.setItem("id", JSON.stringify(user.$id));
-        localStorage.setItem("name", JSON.stringify(user.name));
-        success("Login successful!");
-        setUser(user);
-        setCredentials({ email: "", password: "" }); // Clear the form
-
-        // Use React Router to navigate to dashboard
-        navigate("/dashboard");
-      }
+      localStorage.setItem("session", "true");
+      localStorage.setItem("id", JSON.stringify(user.$id));
+      localStorage.setItem("name", JSON.stringify(user.clientName));
+      success("Login successful!");
+      setUser(user);
+      setIsAuthenticated(true);
+      setCredentials({ email: "", password: "" });
+      navigate("/dashboard");
     } catch (err) {
       error(err.message || "Login failed. Please check your credentials.");
     } finally {

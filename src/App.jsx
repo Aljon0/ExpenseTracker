@@ -23,6 +23,11 @@ const App = () => {
   useEffect(() => {
     const checkUserSession = async () => {
       try {
+        if (!localStorage.getItem("sessionActive")) {
+          setIsAuthenticated(false);
+          setUser(null);
+          return;
+        }
         const currentUser = await getCurrentUser();
         if (currentUser) {
           setUser(currentUser);
@@ -45,7 +50,7 @@ const App = () => {
     };
 
     checkUserSession();
-  }, []);
+  }, [isAuthenticated]);
 
   const handleLogout = async () => {
     try {
@@ -119,7 +124,10 @@ const App = () => {
                         </p>
                       </div>
                       <div className="w-full max-w-md">
-                        <Login setUser={setUser} />
+                        <Login
+                          setUser={setUser}
+                          setIsAuthenticated={setIsAuthenticated}
+                        />
                       </div>
                     </div>
                   )

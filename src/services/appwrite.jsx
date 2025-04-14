@@ -36,8 +36,10 @@ const createAccount = async (email, password, name) => {
 
 const login = async (email, password) => {
   try {
-    await account.createEmailPasswordSession(email, password);
-    const user = await getCurrentUser();
+    const user = await account.createEmailPasswordSession(email, password);
+
+    console.log("User logged in:", user.current);
+    localStorage.setItem("sessionActive", "true");
     return user;
   } catch (error) {
     localStorage.removeItem("sessionActive");
@@ -47,6 +49,8 @@ const login = async (email, password) => {
 
 const getCurrentUser = async () => {
   try {
+    const sessionActive = localStorage.getItem("sessionActive");
+    if (!sessionActive) return null; // No active session
     const user = await account.get();
     if (user) {
       localStorage.setItem("sessionActive", "true");
