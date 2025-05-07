@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "../contexts/ToastContext";
-import { login } from "../services/appwrite";
+import { login, guestLogin } from "../services/appwrite";
 
 const Login = ({ setUser, setIsAuthenticated }) => {
   const [credentials, setCredentials] = useState({
@@ -9,6 +9,7 @@ const Login = ({ setUser, setIsAuthenticated }) => {
     password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { success, error } = useToast();
   const navigate = useNavigate();
@@ -53,6 +54,25 @@ const Login = ({ setUser, setIsAuthenticated }) => {
     }
   };
 
+  const handleGuestLogin = async () => {
+    try {
+      setIsDemoLoading(true);
+      const guestUser = await guestLogin();
+
+      localStorage.setItem("session", "true");
+      localStorage.setItem("id", JSON.stringify(guestUser.$id));
+      localStorage.setItem("name", JSON.stringify("Guest User"));
+      success("Welcome to the demo! You can create, edit and delete expenses as a guest.");
+      setUser(guestUser);
+      setIsAuthenticated(true);
+      navigate("/dashboard");
+    } catch (err) {
+      error(err.message || "Failed to start demo. Please try again.");
+    } finally {
+      setIsDemoLoading(false);
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-xl p-8 w-full">
       <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
@@ -69,7 +89,7 @@ const Login = ({ setUser, setIsAuthenticated }) => {
             value={credentials.email}
             onChange={handleChange}
             className="block w-full border border-gray-300 rounded-md shadow-sm p-2"
-            disabled={isLoading}
+            disabled={isLoading || isDemoLoading}
           />
         </div>
         <div className="relative">
@@ -83,7 +103,7 @@ const Login = ({ setUser, setIsAuthenticated }) => {
               value={credentials.password}
               onChange={handleChange}
               className="block w-full border border-gray-300 rounded-md shadow-sm p-2 pr-10"
-              disabled={isLoading}
+              disabled={isLoading || isDemoLoading}
             />
             <button
               type="button"
@@ -154,20 +174,38 @@ const Login = ({ setUser, setIsAuthenticated }) => {
         </div>
         <button
           className={`w-full py-2 px-4 bg-green-500 text-white rounded-md ${
-            isLoading ? "opacity-70 cursor-not-allowed" : ""
+            isLoading || isDemoLoading ? "opacity-70 cursor-not-allowed" : ""
           }`}
           type="submit"
-          disabled={isLoading}
+          disabled={isLoading || isDemoLoading}
         >
           {isLoading ? "Signing In..." : "Sign In"}
         </button>
+        
+        <div className="relative flex items-center justify-center">
+          <div className="border-t border-gray-300 flex-grow"></div>
+          <span className="mx-4 text-sm text-gray-500">or</span>
+          <div className="border-t border-gray-300 flex-grow"></div>
+        </div>
+        
+        <button
+          className={`w-full py-2 px-4 bg-green-100 text-green-700 border border-green-500 rounded-md font-medium transition-colors hover:bg-green-200 ${
+            isDemoLoading || isLoading ? "opacity-70 cursor-not-allowed" : ""
+          }`}
+          type="button"
+          onClick={handleGuestLogin}
+          disabled={isDemoLoading || isLoading}
+        >
+          {isDemoLoading ? "Loading Demo..." : "Try Demo / Guest Access"}
+        </button>
+        
         <div className="text-center text-sm text-gray-500">
           Don't have an account?{" "}
           <button
             onClick={() => navigate("/register")}
             className="text-green-500 hover:text-green-600 cursor-pointer"
             type="button"
-            disabled={isLoading}
+            disabled={isLoading || isDemoLoading}
           >
             Register
           </button>
